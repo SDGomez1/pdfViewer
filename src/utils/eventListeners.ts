@@ -1,11 +1,3 @@
-import {
-  pdfViewUpdateCurrentScale,
-  pdfViewUpdateScale,
-  pdfViewUpdateTouchOrigin,
-} from "@/lib/features/pdfView/pdfViewSlice";
-import { store } from "@/lib/store";
-
-const reduxStore = store;
 let touchInfo: any = null;
 let currentScale = 1;
 function accumulateFactor(previousScale: number, factor: number) {
@@ -24,7 +16,6 @@ function updateScale(scaleFactor: number) {
   if (scaleFactor > 0 && scaleFactor !== 1) {
     let newScale = Math.round(currentScale * scaleFactor * 100) / 100;
     currentScale = newScale;
-    reduxStore.dispatch(pdfViewUpdateScale(newScale));
     return newScale;
   }
   return 1;
