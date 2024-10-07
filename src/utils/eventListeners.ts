@@ -43,9 +43,6 @@ function onWheel(evt: WheelEvent) {
 }
 
 function onTouchStart(evt: TouchEvent) {
-  if (evt.touches.length < 2) {
-    return;
-  }
   evt.preventDefault();
 
   if (evt.touches.length !== 2) {
@@ -70,6 +67,7 @@ function onTouchStart(evt: TouchEvent) {
 }
 
 function onTouchMove(evt: TouchEvent) {
+  evt.preventDefault();
   if (!touchInfo || evt.touches.length !== 2) {
     return;
   }

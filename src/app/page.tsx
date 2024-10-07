@@ -1,98 +1,140 @@
 "use client";
 
-import {
-  onWheel,
-  onTouchStart,
-  onTouchMove,
-  onTouchEnd,
-} from "@/utils/eventListeners";
-import { useGesture, usePinch, useWheel } from "@use-gesture/react";
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
+import type { PDFDocumentProxy } from "pdfjs-dist";
+import { pdfjs, Document, Page } from "react-pdf";
+import { useGesture } from "@use-gesture/react";
+import { onTouchMove, onTouchStart } from "@/utils/eventListeners";
+
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.js",
+  import.meta.url
+).toString();
 
 export default function HomePage() {
-  const [isPinching, setIsPinching] = useState<boolean | undefined>(false);
-  const [pinchData, setPinchData] = useState(1);
-  const [origin, setOrigin] = useState<number[] | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!window) {
-      return;
-    }
-    window.addEventListener("wheel", onWheel, {
-      passive: false,
-    });
-    window.addEventListener("touchstart", onTouchStart, {
-      passive: false,
-    });
+  const [numPages, setNumPages] = useState<number>();
 
-    window.addEventListener("touchmove", onTouchMove, {
-      passive: false,
-    });
-    window.addEventListener("touchend", onTouchEnd, {
-      passive: false,
-    });
-    const handler = (e: Event) => e.preventDefault();
-    document.addEventListener("gesturestart", handler);
-    document.addEventListener("gesturechange", handler);
-    document.addEventListener("gestureend", handler);
-    return () => {
-      document.removeEventListener("wheel", () => {});
-      document.removeEventListener("touchstart", onTouchStart);
-      document.removeEventListener("touchmove", onTouchMove);
-      document.removeEventListener("touchend", onTouchEnd);
-      document.removeEventListener("gesturestart", handler);
-      document.removeEventListener("gesturechange", handler);
-      document.removeEventListener("gestureend", handler);
-    };
-  }, []);
-  usePinch(
-    ({
-      event,
-      memo,
-      pinching,
-      origin: [ox, oy],
-      offset: [s, a],
-      movement: [mv],
-      first,
-    }) => {
-      event.preventDefault();
-      setIsPinching(pinching);
-      if (first) {
-        const { width, height, x, y } =
-          containerRef.current!.getBoundingClientRect();
-        const tx = ox - (x + width / 2);
-        const ty = oy - (y + height / 2);
-        memo = [tx, ty];
-      }
+  const [pdfView, setPdfView] = useState({ x: 0, y: 0, scale: 1 });
 
-      setOrigin([memo[0], memo[1]]);
+  const pdfRef = useRef<HTMLDivElement | null>(null);
+  const pdfContainerRef = useRef<HTMLDivElement>(null);
+
+  function onDocumentLoadSuccess({
+    numPages: nextNumPages,
+  }: PDFDocumentProxy): void {
+    setNumPages(nextNumPages);
+  }
+
+  useGesture(
+    {
+      onDrag: ({ offset: [dx, dy] }) => {
+        setPdfView({ ...pdfView, x: dx, y: dy });
+        if (pdfRef.current) {
+          pdfRef.current.style.left = `${String(pdfView.x)}px`;
+          pdfRef.current.style.top = `${String(pdfView.y)}px`;
+        }
+      },
+      onPinch: ({ offset: [s], origin: [pOX, pOY], memo }) => {
+        if (pdfRef.current) {
+          memo ??= {
+            bounds: pdfRef.current.getBoundingClientRect(),
+          };
+          let transformOriginX = memo.bounds.x + memo.bounds.width / 2;
+          let transformOriginY = memo.bounds.y + memo.bounds.height / 2;
+
+          let displacementX = transformOriginX - pOX;
+          let displacementY = transformOriginY - pOY;
+          setPdfView({
+            ...pdfView,
+            scale: s,
+            x: displacementX * s,
+            y: displacementY * s,
+          });
+          pdfRef.current.style.scale = String(s);
+        }
+      },
+      onDragEnd: () => {
+        adjustScaleBounds();
+      },
+      onPinchEnd: () => {
+        adjustScaleBounds();
+        if (pdfRef.current) {
+          // Set the --scale-factor property on the parent element
+          // Set the --scale-factor property on the parent element
+          /*   pdfRef.current.style.setProperty(
+            "--scale-factor",
+            String(pdfView.scale)
+          );
+
+          // Select all children with class 'react-pdf__Page' and update the same property
+          const pages =
+            pdfRef.current.querySelectorAll<HTMLDivElement>(".react-pdf__Page");
+          pages.forEach((page) => {
+            page.style.setProperty("--scale-factor", String(pdfView.scale));
+          }); */
+        }
+      },
     },
     {
-      target: containerRef,
+      drag: {
+        from: () => [pdfView.x, pdfView.y],
+      },
+      pinch: { scaleBounds: { min: 0.5, max: 2 }, rubberband: true },
+
+      target: pdfRef,
+      eventOptions: { passive: false },
     }
   );
 
+  function adjustScaleBounds() {
+    if (pdfRef.current && pdfContainerRef.current) {
+      let newPdfview = pdfView;
+      let pdfBounds = pdfRef.current.getBoundingClientRect();
+      let pdfContainerBounds = pdfContainerRef.current.getBoundingClientRect();
+
+      let originalWidth = pdfRef.current.clientWidth;
+      let withOverhang = (pdfBounds.width - originalWidth) / 2;
+      let originalHeight = pdfRef.current.clientHeight;
+      let heightOverhang = (pdfBounds.height - originalHeight) / 2;
+
+      if (pdfBounds.left > pdfContainerBounds.left) {
+        newPdfview.x = withOverhang;
+      }
+      if (pdfBounds.right < pdfContainerBounds.right) {
+        newPdfview.x =
+          -(pdfBounds.width - pdfContainerBounds.width) + withOverhang;
+      }
+      if (pdfBounds.top > pdfContainerBounds.top) {
+        newPdfview.y = heightOverhang;
+      }
+      if (pdfBounds.bottom < pdfContainerBounds.bottom) {
+        newPdfview.y =
+          -(pdfBounds.height - pdfContainerBounds.height) + heightOverhang;
+      }
+
+      setPdfView(newPdfview);
+      pdfRef.current.style.left = `${String(newPdfview.x)}px`;
+      pdfRef.current.style.top = `${String(newPdfview.y)}px`;
+    }
+  }
+
   return (
-    <div className="absolute flex min-w-[350px] flex-col overflow-hidden">
-      <div className="flex h-8 w-screen items-center justify-center bg-neutral-200">
-        Toolbar {origin ? origin[0].toFixed(2) : ""} {pinchData.toFixed(2)}
-      </div>
-      <div className="inset-y-8 flex items-center justify-center outline-none">
-        <div className="relative flex w-screen justify-center overflow-hidden">
-          <div
-            ref={containerRef}
-            className="flex min-h-screen min-w-full items-center justify-center bg-green-200"
-            style={{
-              transformOrigin: origin
-                ? `${origin[0]}px ${origin[1]}px`
-                : "center center",
-              scale: pinchData,
-            }}
-          >
-            <div className="size-40 bg-blue-400" style={{}}></div>
+    <>
+      <p> pdfViewer</p>
+      <div className="p-8">
+        <div className="relative h-80 w-64 touch-none overflow-hidden ring-4 ring-blue-500">
+          <div ref={pdfContainerRef}>
+            <Document
+              file={"./test.pdf"}
+              onLoadSuccess={onDocumentLoadSuccess}
+              inputRef={pdfRef}
+              className={"absolute"}
+            >
+              <Page pageNumber={1} />
+            </Document>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

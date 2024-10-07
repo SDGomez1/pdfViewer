@@ -27,9 +27,7 @@ export default function RootLayout({
         />
       </head>
       <Providers>
-        <body className={poppins.className}>
-          <div className="relative h-full w-full">{children}</div>
-        </body>
+        <body className={`${poppins.className} touch-none`}>{children}</body>
       </Providers>
     </html>
   );
