@@ -15,7 +15,7 @@ export const Root = ({
   const viewportContext = useViewPortContext({});
 
   return (
-    <div>
+    <div className="touch-none">
       {ready ? (
         <PDFDocumentContext.Provider value={context}>
           <ViewportContext.Provider value={viewportContext}>
