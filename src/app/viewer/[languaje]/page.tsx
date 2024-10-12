@@ -9,7 +9,7 @@ import { useQuery } from "convex/react";
 import { useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 
-export default function homepage({ params }: { params: { languaje: string } }) {
+export default function Viewer({ params }: { params: { languaje: string } }) {
   const [file, setFile] = useState<string | null>(null);
   const pdfUrl = useQuery(api.pdfFiles.getpdfFile, {
     languaje: params.languaje,
