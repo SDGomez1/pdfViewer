@@ -1,24 +1,28 @@
 import { HTMLProps } from "react";
 import { useCanvasLayer } from "../layers/canvas";
 import { useTextLayer } from "../layers/text";
+import Image from "next/image";
 
 export const CanvasLayer = ({
   style,
   ...props
 }: HTMLProps<HTMLCanvasElement>) => {
-  const { canvasRef } = useCanvasLayer();
+  const { canvasRef, image, size } = useCanvasLayer();
 
   return (
-    <canvas
-      style={{
-        ...style,
-        position: "absolute",
-        top: 0,
-        left: 0,
-      }}
-      {...props}
-      ref={canvasRef}
-    />
+    <>
+      <canvas
+        style={{
+          ...style,
+          top: 0,
+          left: 0,
+        }}
+        className="hidden"
+        {...props}
+        ref={canvasRef}
+      />
+      <Image src={image} alt="" width={size.w} height={size.h}></Image>
+    </>
   );
 };
 export const TextLayer = ({

@@ -1,10 +1,12 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePDFPage } from "../page";
 import { useDevicePixelRatio, useViewport, useVisibility } from "../viewport";
 import { useDebounce } from "@uidotdev/usehooks";
 
 export const useCanvasLayer = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [image, setImage] = useState("");
+  const [size, setSize] = useState({ w: 0, h: 0 });
   const { pdfPageProxy } = usePDFPage();
   const dpr = useDevicePixelRatio();
   const { visible } = useVisibility({ elementRef: canvasRef });
@@ -18,7 +20,7 @@ export const useCanvasLayer = () => {
     }
     const viewport = pdfPageProxy.getViewport({ scale: 1 });
     const canvas = canvasRef.current;
-    const scale = debouncedVisible ? dpr * zoom : 0.5;
+    const scale = dpr * zoom;
     canvas.height = viewport.height * scale;
     canvas.width = viewport.width * scale;
 
@@ -37,12 +39,17 @@ export const useCanvasLayer = () => {
       viewport,
     });
 
-    renderingTask.promise.catch((error) => {
-      if (error.name === "RenderingCancelledException") {
-        return;
-      }
-      throw error;
-    });
+    renderingTask.promise
+      .then(() => {
+        setImage(canvas.toDataURL("image/png"));
+        setSize({ w: viewport.width, h: viewport.height });
+      })
+      .catch((error) => {
+        if (error.name === "RenderingCancelledException") {
+          return;
+        }
+        throw error;
+      });
 
     return () => {
       void renderingTask.cancel();
@@ -50,5 +57,7 @@ export const useCanvasLayer = () => {
   }, [pdfPageProxy, canvasRef.current, dpr, debouncedVisible, zoom]);
   return {
     canvasRef,
+    image,
+    size,
   };
 };
