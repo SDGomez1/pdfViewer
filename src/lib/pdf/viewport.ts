@@ -1,5 +1,4 @@
 import { useGesture } from "@use-gesture/react";
-import { fork } from "child_process";
 import {
   createContext,
   RefObject,
@@ -28,6 +27,7 @@ export const useDevicePixelRatio = () => {
     );
 
     windowMatchMedia.addEventListener("change", handleDPRChange);
+    window.addEventListener("gesturestart", () => {});
     return () => {
       windowMatchMedia.removeEventListener("change", handleDPRChange);
     };
@@ -134,7 +134,7 @@ const clamp = (value: number, min: number, max: number) => {
 export const useViewPortContext = ({
   maxZoom = 5,
   minZoom = 0.5,
-  defaultZoom = 1,
+  defaultZoom = 0.5,
 }: ViewportProps) => {
   const [zoom, setZoom] = useState(defaultZoom);
   const [translateX, setTranslateX] = useState(0);
@@ -351,6 +351,19 @@ export const useViewportContainer = ({
   useEffect(() => {
     updateTransform();
   }, []);
+
+  useEffect(() => {
+    const preventDefault = (e: any) => e.preventDefault();
+
+    document.addEventListener("gesturestart", preventDefault);
+    document.addEventListener("gesturechange", preventDefault);
+
+    return () => {
+      document.removeEventListener("gesturestart", preventDefault);
+      document.removeEventListener("gesturechange", preventDefault);
+    };
+  });
+
   useGesture(
     {
       onWheel: ({ ctrlKey, movement, active, event, memo, first }) => {
@@ -467,7 +480,7 @@ export const useViewportContainer = ({
 
     {
       target: containerRef,
-      pinch: { scaleBounds: { min: 0.5, max: 2 }, rubberband: true },
+      pinch: { scaleBounds: { min: 0.5, max: 3 }, rubberband: true },
     }
   );
 
