@@ -282,6 +282,7 @@ export const useViewportContainer = ({
 }) => {
   const [origin, setOrigin] = useState<[number, number]>([0, 0]);
   const { maxZoom, minZoom, zoom, setZoom, setViewportRef } = useViewport();
+
   useEffect(() => {
     setViewportRef(containerRef);
   }, [containerRef.current]);
@@ -294,6 +295,7 @@ export const useViewportContainer = ({
     translateY: 0,
     zoom: 1,
   });
+
   const updateTransform = useCallback(() => {
     if (
       !containerRef.current ||
@@ -302,6 +304,7 @@ export const useViewportContainer = ({
     ) {
       return;
     }
+    console.log(transformatios.current);
     const { translateX, translateY, zoom } = transformatios.current;
     elementRef.current.style.transform = `scale3d(${zoom}, ${zoom}, 1)`;
 
@@ -312,9 +315,10 @@ export const useViewportContainer = ({
 
     containerRef.current.scrollTop = translateY;
     containerRef.current.scrollLeft = translateX;
-
     setZoom(() => transformatios.current.zoom);
+    console.log(zoom);
   }, [containerRef.current, elementRef.current, setZoom, zoom]);
+
   useEffect(() => {
     if (transformatios.current.zoom === zoom || !containerRef.current) {
       return;
@@ -352,7 +356,30 @@ export const useViewportContainer = ({
   }, []);
   useGesture(
     {
-      onPinch: ({ origin, first, movement: [ms], memo }) => {
+      onWheel: ({ ctrlKey, movement, active }) => {
+        if (ctrlKey) {
+          if (active) {
+            const additiveScaleFactor = -(movement[1] / 100) * 0.25;
+            let newZoom = transformatios.current.zoom + additiveScaleFactor;
+            if (newZoom < 0.5) {
+              newZoom = 0.5;
+            }
+            if (newZoom > 3) {
+              newZoom = 3;
+            }
+            transformatios.current = {
+              translateX: 0,
+              translateY: 0,
+              zoom: newZoom,
+            };
+            updateTransform();
+          }
+        }
+      },
+      onPinch: ({ origin, first, movement: [ms], memo, ctrlKey }) => {
+        if (ctrlKey) {
+          return;
+        }
         const newMemo = firstMemo(first, memo, () => {
           const elementRect = elementRef.current!.getBoundingClientRect();
           const containerRect = containerRef.current!.getBoundingClientRect();
@@ -400,6 +427,7 @@ export const useViewportContainer = ({
     },
     {
       target: containerRef,
+      pinch: { scaleBounds: { min: 0.5, max: 2 }, rubberband: true },
     }
   );
 

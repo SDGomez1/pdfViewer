@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { usePDFPage } from "../page";
-import { useDevicePixelRatio, useViewport, useVisibility } from "../viewport";
+import { useDevicePixelRatio, useViewport } from "../viewport";
 import { useDebounce } from "@uidotdev/usehooks";
 
 export const useCanvasLayer = () => {
@@ -9,10 +9,8 @@ export const useCanvasLayer = () => {
   const [size, setSize] = useState({ w: 0, h: 0 });
   const { pdfPageProxy } = usePDFPage();
   const dpr = useDevicePixelRatio();
-  const { visible } = useVisibility({ elementRef: canvasRef });
   const { zoom: bouncyZoom } = useViewport();
   const zoom = useDebounce(bouncyZoom, 1000);
-  const debouncedVisible = useDebounce(visible, 1000);
 
   useEffect(() => {
     if (!canvasRef.current) {
@@ -44,6 +42,7 @@ export const useCanvasLayer = () => {
         setImage(canvas.toDataURL("image/png"));
         setSize({ w: viewport.width, h: viewport.height });
       })
+
       .catch((error) => {
         if (error.name === "RenderingCancelledException") {
           return;
@@ -54,7 +53,7 @@ export const useCanvasLayer = () => {
     return () => {
       void renderingTask.cancel();
     };
-  }, [pdfPageProxy, canvasRef.current, dpr, debouncedVisible, zoom]);
+  }, [pdfPageProxy, canvasRef.current, dpr, zoom]);
   return {
     canvasRef,
     image,

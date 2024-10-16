@@ -10,9 +10,11 @@ export default function Viewer() {
   return (
     <Root fileUrl={"/test.pdf"}>
       <Viewport>
-        <Page pageNumber={1}>
-          <CanvasLayer />
-        </Page>
+        <Pages>
+          <Page pageNumber={1}>
+            <CanvasLayer />
+          </Page>
+        </Pages>
       </Viewport>
     </Root>
   );
