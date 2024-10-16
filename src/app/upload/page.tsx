@@ -130,9 +130,8 @@ export default function Login() {
         </h2>
 
         {languages.map((language, index) => (
-          <div className="flex flex-col gap-4 lg:flex-row">
+          <div className="flex flex-col gap-4 lg:flex-row" key={index}>
             <button
-              key={index}
               className="w-80 rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:outline-none"
               onClick={() => handleButtonClick(language)}
             >
