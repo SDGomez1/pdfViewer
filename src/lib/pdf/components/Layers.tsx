@@ -10,7 +10,7 @@ export const CanvasLayer = ({
   const { canvasRef, image, size, containerRef } = useCanvasLayer();
 
   return (
-    <div ref={containerRef}>
+    <div ref={containerRef} className="bg-white">
       <canvas
         style={{
           ...style,

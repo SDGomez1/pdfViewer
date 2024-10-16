@@ -58,7 +58,7 @@ export const useCanvasLayer = () => {
         void renderingTask.cancel();
       };
     }
-    if (debouncedVisibility && scale >= 1 && !initialRendering) {
+    if (debouncedVisibility && !initialRendering) {
       const renderingTask = pdfPageProxy.render({
         canvasContext: canvasContext,
         viewport,

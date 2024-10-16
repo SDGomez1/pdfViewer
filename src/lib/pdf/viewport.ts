@@ -86,7 +86,7 @@ export interface ViewportContextType {
   setViewportRef: (ref: RefObject<HTMLDivElement>) => void;
 }
 export const defaultVieportContext = {
-  zoom: 1,
+  zoom: 0.6,
   minZoom: 0.5,
   maxZoom: 5,
   setZoom: () => {
@@ -286,6 +286,7 @@ export const useViewportContainer = ({
   useEffect(() => {
     setViewportRef(containerRef);
   }, [containerRef.current]);
+
   const transformatios = useRef<{
     translateX: number;
     translateY: number;
@@ -293,7 +294,7 @@ export const useViewportContainer = ({
   }>({
     translateX: 0,
     translateY: 0,
-    zoom: 1,
+    zoom: zoom,
   });
 
   const updateTransform = useCallback(() => {
@@ -307,8 +308,7 @@ export const useViewportContainer = ({
     const { translateX, translateY, zoom } = transformatios.current;
     elementRef.current.style.transform = `scale3d(${zoom}, ${zoom}, 1)`;
 
-    const elementBoundingBox = elementRef.current.getBoundingClientRect();
-
+    const elementBoundingBox = elementRef.current!.getBoundingClientRect();
     elementWrapperRef.current.style.width = `${elementBoundingBox.width}px`;
     elementWrapperRef.current.style.height = `${elementBoundingBox.height}px`;
 
@@ -338,8 +338,8 @@ export const useViewportContainer = ({
         return;
       }
       const elementBoundingBox = entries[0];
-      elementWrapperRef.current.style.width = `${elementBoundingBox.contentRect.width}px`;
-      elementWrapperRef.current.style.height = `${elementBoundingBox.contentRect.height}px`;
+      elementWrapperRef.current.style.width = `${elementBoundingBox.contentRect.width * zoom}px`;
+      elementWrapperRef.current.style.height = `${elementBoundingBox.contentRect.height * zoom}px`;
     };
     const resizeObserver = new ResizeObserver(callback);
     resizeObserver.observe(elementRef.current);
