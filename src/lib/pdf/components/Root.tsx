@@ -15,7 +15,7 @@ export const Root = ({
   const viewportContext = useViewPortContext({});
 
   return (
-    <div className="touch-none bg-neutral-500">
+    <div className="min-h-svh touch-none bg-neutral-500">
       {ready ? (
         <PDFDocumentContext.Provider value={context}>
           <ViewportContext.Provider value={viewportContext}>

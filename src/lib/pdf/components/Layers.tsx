@@ -21,7 +21,9 @@ export const CanvasLayer = ({
         {...props}
         ref={canvasRef}
       />
-      <Image src={image} alt="" width={size.w} height={size.h}></Image>
+      {image !== "" && (
+        <Image src={image} alt="" width={size.w} height={size.h}></Image>
+      )}
     </>
   );
 };

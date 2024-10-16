@@ -304,7 +304,6 @@ export const useViewportContainer = ({
     ) {
       return;
     }
-    console.log(transformatios.current);
     const { translateX, translateY, zoom } = transformatios.current;
     elementRef.current.style.transform = `scale3d(${zoom}, ${zoom}, 1)`;
 
@@ -315,11 +314,9 @@ export const useViewportContainer = ({
 
     containerRef.current.scrollTop = translateY;
     containerRef.current.scrollLeft = translateX;
-    setZoom(() => transformatios.current.zoom);
-    console.log(zoom);
   }, [containerRef.current, elementRef.current, setZoom, zoom]);
 
-  useEffect(() => {
+  /* useEffect(() => {
     if (transformatios.current.zoom === zoom || !containerRef.current) {
       return;
     }
@@ -330,7 +327,7 @@ export const useViewportContainer = ({
       zoom,
     };
     updateTransform();
-  }, [zoom]);
+  }, [zoom]); */
 
   useEffect(() => {
     if (!elementRef.current || !elementWrapperRef.current) {
@@ -356,9 +353,29 @@ export const useViewportContainer = ({
   }, []);
   useGesture(
     {
-      onWheel: ({ ctrlKey, movement, active }) => {
+      onWheel: ({ ctrlKey, movement, active, event, memo, first }) => {
         if (ctrlKey) {
           if (active) {
+            const newMemo = firstMemo(first, memo, () => {
+              const containerRec =
+                containerRef.current!.getBoundingClientRect();
+              const currentScrollLeft = containerRef.current!.scrollLeft;
+              const currentScrollTop = containerRef.current!.scrollTop;
+              return {
+                containerRec,
+                currentScrollLeft,
+                currentScrollTop,
+              };
+            });
+            const newTranslateX =
+              event.clientX -
+              newMemo.containerRec.left +
+              newMemo.currentScrollLeft;
+            const newTranslateY =
+              event.clientY -
+              newMemo.containerRec.top +
+              newMemo.currentScrollTop;
+
             const additiveScaleFactor = -(movement[1] / 100) * 0.25;
             let newZoom = transformatios.current.zoom + additiveScaleFactor;
             if (newZoom < 0.5) {
@@ -367,12 +384,19 @@ export const useViewportContainer = ({
             if (newZoom > 3) {
               newZoom = 3;
             }
+            const newScrollLeft =
+              newTranslateX * newZoom -
+              (event.clientX - newMemo.containerRec.left);
+            const newScrollTop =
+              newTranslateY * newZoom -
+              (event.clientY - newMemo.containerRec.top);
             transformatios.current = {
-              translateX: 0,
-              translateY: 0,
+              translateX: newScrollLeft,
+              translateY: newScrollTop,
               zoom: newZoom,
             };
             updateTransform();
+            return newMemo;
           }
         }
       },
@@ -390,8 +414,8 @@ export const useViewportContainer = ({
           ];
 
           const containerPosition: [number, number] = [
-            (origin[0] = containerRect.left),
-            (origin[1] = containerRect.top),
+            origin[0] - containerRect.left,
+            origin[1] - containerRect.top,
           ];
 
           setOrigin([
@@ -424,7 +448,11 @@ export const useViewportContainer = ({
         updateTransform();
         return newMemo;
       },
+      onPinchEnd: () => {
+        setZoom(() => transformatios.current.zoom);
+      },
     },
+
     {
       target: containerRef,
       pinch: { scaleBounds: { min: 0.5, max: 2 }, rubberband: true },
