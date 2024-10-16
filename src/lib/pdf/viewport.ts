@@ -357,24 +357,32 @@ export const useViewportContainer = ({
         if (ctrlKey) {
           if (active) {
             const newMemo = firstMemo(first, memo, () => {
-              const containerRec =
+              const elementRect = elementRef.current!.getBoundingClientRect();
+              const containerRect =
                 containerRef.current!.getBoundingClientRect();
-              const currentScrollLeft = containerRef.current!.scrollLeft;
-              const currentScrollTop = containerRef.current!.scrollTop;
+              const originX = event.clientX;
+              const originY = event.clientY;
+
+              const contentPosition: [number, number] = [
+                originX - elementRect.left,
+                originY - elementRect.top,
+              ];
+              const containerPosition: [number, number] = [
+                originX - containerRect.left,
+                originY - containerRect.top,
+              ];
+              setOrigin([
+                contentPosition[0] / transformatios.current.zoom,
+                containerPosition[1] / transformatios.current.zoom,
+              ]);
+
               return {
-                containerRec,
-                currentScrollLeft,
-                currentScrollTop,
+                containerPosition,
+                contentPosition,
+                originZoom: transformatios.current.zoom,
+                originTranslate: transformatios.current.translateY,
               };
             });
-            const newTranslateX =
-              event.clientX -
-              newMemo.containerRec.left +
-              newMemo.currentScrollLeft;
-            const newTranslateY =
-              event.clientY -
-              newMemo.containerRec.top +
-              newMemo.currentScrollTop;
 
             const additiveScaleFactor = -(movement[1] / 100) * 0.25;
             let newZoom = transformatios.current.zoom + additiveScaleFactor;
@@ -384,15 +392,19 @@ export const useViewportContainer = ({
             if (newZoom > 3) {
               newZoom = 3;
             }
-            const newScrollLeft =
-              newTranslateX * newZoom -
-              (event.clientX - newMemo.containerRec.left);
-            const newScrollTop =
-              newTranslateY * newZoom -
-              (event.clientY - newMemo.containerRec.top);
+
+            const realMs = newZoom / newMemo.originZoom;
+
+            const newTranslateX =
+              newMemo.contentPosition[0] * realMs -
+              newMemo.containerPosition[0];
+            const newTranslateY =
+              newMemo.contentPosition[1] * realMs -
+              newMemo.containerPosition[1];
+
             transformatios.current = {
-              translateX: newScrollLeft,
-              translateY: newScrollTop,
+              translateX: newTranslateX,
+              translateY: newTranslateY,
               zoom: newZoom,
             };
             updateTransform();

@@ -3,6 +3,7 @@ import { FormEvent, useState } from "react";
 import { useMutation } from "convex/react";
 import { ChangeEvent } from "react";
 import { api } from "../../../convex/_generated/api";
+import Link from "next/link";
 
 export default function Login() {
   const verify = useMutation(api.users.authenticateUser);
@@ -129,13 +130,22 @@ export default function Login() {
         </h2>
 
         {languages.map((language, index) => (
-          <button
-            key={index}
-            className="w-80 rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:outline-none"
-            onClick={() => handleButtonClick(language)}
-          >
-            cargar PDF para {language}
-          </button>
+          <div className="flex flex-col gap-4 lg:flex-row">
+            <button
+              key={index}
+              className="w-80 rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:outline-none"
+              onClick={() => handleButtonClick(language)}
+            >
+              cargar PDF para {language}
+            </button>
+
+            <Link
+              href={`/viewer/${language}`}
+              className="w-80 rounded bg-gray-200 px-4 py-2 hover:bg-gray-300 focus:outline-none"
+            >
+              Ver PDF actual
+            </Link>
+          </div>
         ))}
 
         <input

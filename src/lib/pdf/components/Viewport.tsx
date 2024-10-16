@@ -15,7 +15,7 @@ export const Viewport = ({ children, ...props }: HTMLProps<HTMLDivElement>) => {
   return (
     <div
       ref={containerRef}
-      className="relative flex h-svh w-screen justify-center overflow-auto"
+      className="relative flex h-svh w-screen justify-center overflow-auto px-4 pb-8 pt-16 lg:p-20"
     >
       <div ref={elementWrapperRef} className="w-max">
         <div

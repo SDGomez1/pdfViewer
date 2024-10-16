@@ -7,10 +7,10 @@ export const CanvasLayer = ({
   style,
   ...props
 }: HTMLProps<HTMLCanvasElement>) => {
-  const { canvasRef, image, size } = useCanvasLayer();
+  const { canvasRef, image, size, containerRef } = useCanvasLayer();
 
   return (
-    <>
+    <div ref={containerRef}>
       <canvas
         style={{
           ...style,
@@ -24,7 +24,7 @@ export const CanvasLayer = ({
       {image !== "" && (
         <Image src={image} alt="" width={size.w} height={size.h}></Image>
       )}
-    </>
+    </div>
   );
 };
 export const TextLayer = ({
